@@ -1,1 +1,1 @@
-include ':app', ':spydroiddemo'
+include ':app'

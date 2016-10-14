@@ -43,7 +43,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 	private int naluLength = 0;
 	private long delay = 0, oldtime = 0;
 	private Statistics stats = new Statistics();
-	private byte[] sps = null, pps = null;
+	private byte[] sps = null, pps = null, stapa = null;
 	byte[] header = new byte[5];	
 	private int count = 0;
 	private int streamType = 1;
@@ -77,10 +77,31 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 	public void setStreamParameters(byte[] pps, byte[] sps) {
 		this.pps = pps;
 		this.sps = sps;
+
+		// A STAP-A NAL (NAL type 24) containing the sps and pps of the stream
+		if (pps != null && sps != null) {
+			// STAP-A NAL header + NALU 1 (SPS) size + NALU 2 (PPS) size = 5 bytes
+			stapa = new byte[sps.length + pps.length + 5];
+
+			// STAP-A NAL header is 24
+			stapa[0] = 24;
+
+			// Write NALU 1 size into the array (NALU 1 is the SPS).
+			stapa[1] = (byte) (sps.length >> 8);
+			stapa[2] = (byte) (sps.length & 0xFF);
+
+			// Write NALU 2 size into the array (NALU 2 is the PPS).
+			stapa[sps.length + 3] = (byte) (pps.length >> 8);
+			stapa[sps.length + 4] = (byte) (pps.length & 0xFF);
+
+			// Write NALU 1 into the array, then write NALU 2 into the array.
+			System.arraycopy(sps, 0, stapa, 3, sps.length);
+			System.arraycopy(pps, 0, stapa, 5 + sps.length, pps.length);
+		}
 	}	
 
 	public void run() {
-		long duration = 0, delta2 = 0;
+		long duration = 0;
 		Log.d(TAG,"H264 packetizer started !");
 		stats.reset();
 		count = 0;
@@ -101,27 +122,6 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 				send();
 				// We measure how long it took to receive NAL units from the phone
 				duration = System.nanoTime() - oldtime;
-				
-				// Every 3 secondes, we send two packets containing NALU type 7 (sps) and 8 (pps)
-				// Those should allow the H264 stream to be decoded even if no SDP was sent to the decoder.				
-				delta2 += duration/1000000;
-				if (delta2>3000) {
-					delta2 = 0;
-					if (sps != null) {
-						buffer = socket.requestBuffer();
-						socket.markNextPacket();
-						socket.updateTimestamp(ts);
-						System.arraycopy(sps, 0, buffer, rtphl, sps.length);
-						super.send(rtphl+sps.length);
-					}
-					if (pps != null) {
-						buffer = socket.requestBuffer();
-						socket.updateTimestamp(ts);
-						socket.markNextPacket();
-						System.arraycopy(pps, 0, buffer, rtphl, pps.length);
-						super.send(rtphl+pps.length);
-					}					
-				}
 
 				stats.push(duration);
 				// Computes the average duration of a NAL unit
@@ -174,6 +174,7 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 		// Parses the NAL unit type
 		type = header[4]&0x1F;
 
+
 		// The stream already contains NAL unit type 7 or 8, we don't need 
 		// to add them to the stream ourselves
 		if (type == 7 || type == 8) {
@@ -183,6 +184,16 @@ public class H264Packetizer extends AbstractPacketizer implements Runnable {
 				sps = null;
 				pps = null;
 			}
+		}
+
+		// We send two packets containing NALU type 7 (SPS) and 8 (PPS)
+		// Those should allow the H264 stream to be decoded even if no SDP was sent to the decoder.
+		if (type == 5 && sps != null && pps != null) {
+			buffer = socket.requestBuffer();
+			socket.markNextPacket();
+			socket.updateTimestamp(ts);
+			System.arraycopy(stapa, 0, buffer, rtphl, stapa.length);
+			super.send(rtphl+stapa.length);
 		}
 
 		//Log.d(TAG,"- Nal unit length: " + naluLength + " delay: "+delay/1000000+" type: "+type);

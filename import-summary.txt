@@ -1,0 +1,252 @@
+ECLIPSE ANDROID PROJECT IMPORT SUMMARY
+======================================
+
+Ignored Files:
+--------------
+The following files were *not* copied into the new Gradle project; you
+should evaluate whether these are still needed in your project and if
+so manually move them:
+
+* .gitignore
+* .idea\
+* .idea\compiler.xml
+* .idea\copyright\
+* .idea\copyright\profiles_settings.xml
+* .idea\encodings.xml
+* .idea\misc.xml
+* .idea\workspace.xml
+* LICENSE
+* README.md
+* app\
+* app\build.gradle
+* app\libs\
+* app\libs\GoogleAdMobAdsSdk-6.1.0.jar
+* app\libs\acra-4.4.0.jar
+* app\libs\sc-light-jdk15on-1.47.0.2.jar
+* app\libs\scpkix-jdk15on-1.47.0.2.jar
+* app\libs\scprov-jdk15on-1.47.0.2.jar
+* app\lint.xml
+* app\proguard-project.txt
+* app\src\
+* app\src\main\
+* app\src\main\AndroidManifest.xml
+* app\src\main\assets\
+* app\src\main\assets\www\
+* app\src\main\assets\www\credits.htm
+* app\src\main\assets\www\fonts\
+* app\src\main\assets\www\fonts\bangers.eot
+* app\src\main\assets\www\fonts\bangers.woff
+* app\src\main\assets\www\fonts\sunshiney.eot
+* app\src\main\assets\www\fonts\sunshiney.woff
+* app\src\main\assets\www\images\
+* app\src\main\assets\www\images\blue-button.png
+* app\src\main\assets\www\images\camera.png
+* app\src\main\assets\www\images\eye.png
+* app\src\main\assets\www\images\facebook.png
+* app\src\main\assets\www\images\install.jpg
+* app\src\main\assets\www\images\lamp.png
+* app\src\main\assets\www\images\phone.png
+* app\src\main\assets\www\images\quote.png
+* app\src\main\assets\www\images\red-button.png
+* app\src\main\assets\www\images\speaker.png
+* app\src\main\assets\www\images\spydroid.png
+* app\src\main\assets\www\index.htm
+* app\src\main\assets\www\js\
+* app\src\main\assets\www\js\ie.js
+* app\src\main\assets\www\js\jquery-1.9.1.min.js
+* app\src\main\assets\www\js\less-1.2.2.min.js
+* app\src\main\assets\www\js\translations.js
+* app\src\main\assets\www\js\ui.js
+* app\src\main\assets\www\less\
+* app\src\main\assets\www\less\#vlc.less#
+* app\src\main\assets\www\less\accordion.less
+* app\src\main\assets\www\less\base.less
+* app\src\main\assets\www\less\fonts.less
+* app\src\main\assets\www\less\ie.less
+* app\src\main\assets\www\less\index.htm
+* app\src\main\assets\www\less\mixins.less
+* app\src\main\assets\www\less\styles.css
+* app\src\main\assets\www\less\styles.less
+* app\src\main\assets\www\less\vlc.less
+* app\src\main\assets\www\tests\
+* app\src\main\assets\www\tests\test1.htm
+* app\src\main\java\
+* app\src\main\java\net\
+* app\src\main\java\net\majorkernelpanic\
+* app\src\main\java\net\majorkernelpanic\http\
+* app\src\main\java\net\majorkernelpanic\http\ModAssetServer.java
+* app\src\main\java\net\majorkernelpanic\http\ModInternationalization.java
+* app\src\main\java\net\majorkernelpanic\http\ModSSL.java
+* app\src\main\java\net\majorkernelpanic\http\TinyHttpServer.java
+* app\src\main\java\net\majorkernelpanic\spydroid\
+* app\src\main\java\net\majorkernelpanic\spydroid\SpydroidApplication.java
+* app\src\main\java\net\majorkernelpanic\spydroid\Utilities.java
+* app\src\main\java\net\majorkernelpanic\spydroid\api\
+* app\src\main\java\net\majorkernelpanic\spydroid\api\CustomHttpServer.java
+* app\src\main\java\net\majorkernelpanic\spydroid\api\CustomRtspServer.java
+* app\src\main\java\net\majorkernelpanic\spydroid\api\RequestHandler.java
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\AboutFragment.java
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\HandsetFragment.java
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\OptionsActivity.java
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\PreviewFragment.java
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\SpydroidActivity.java
+* app\src\main\java\net\majorkernelpanic\spydroid\ui\TabletFragment.java
+* app\src\main\java\net\majorkernelpanic\streaming\
+* app\src\main\java\net\majorkernelpanic\streaming\MediaStream.java
+* app\src\main\java\net\majorkernelpanic\streaming\Session.java
+* app\src\main\java\net\majorkernelpanic\streaming\SessionBuilder.java
+* app\src\main\java\net\majorkernelpanic\streaming\Stream.java
+* app\src\main\java\net\majorkernelpanic\streaming\audio\
+* app\src\main\java\net\majorkernelpanic\streaming\audio\AACStream.java
+* app\src\main\java\net\majorkernelpanic\streaming\audio\AMRNBStream.java
+* app\src\main\java\net\majorkernelpanic\streaming\audio\AudioQuality.java
+* app\src\main\java\net\majorkernelpanic\streaming\audio\AudioStream.java
+* app\src\main\java\net\majorkernelpanic\streaming\exceptions\
+* app\src\main\java\net\majorkernelpanic\streaming\exceptions\CameraInUseException.java
+* app\src\main\java\net\majorkernelpanic\streaming\exceptions\ConfNotSupportedException.java
+* app\src\main\java\net\majorkernelpanic\streaming\exceptions\InvalidSurfaceException.java
+* app\src\main\java\net\majorkernelpanic\streaming\exceptions\StorageUnavailableException.java
+* app\src\main\java\net\majorkernelpanic\streaming\gl\
+* app\src\main\java\net\majorkernelpanic\streaming\gl\SurfaceManager.java
+* app\src\main\java\net\majorkernelpanic\streaming\gl\SurfaceView.java
+* app\src\main\java\net\majorkernelpanic\streaming\gl\TextureManager.java
+* app\src\main\java\net\majorkernelpanic\streaming\hw\
+* app\src\main\java\net\majorkernelpanic\streaming\hw\CodecManager.java
+* app\src\main\java\net\majorkernelpanic\streaming\hw\EncoderDebugger.java
+* app\src\main\java\net\majorkernelpanic\streaming\hw\NV21Convertor.java
+* app\src\main\java\net\majorkernelpanic\streaming\mp4\
+* app\src\main\java\net\majorkernelpanic\streaming\mp4\MP4Config.java
+* app\src\main\java\net\majorkernelpanic\streaming\mp4\MP4Parser.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtcp\
+* app\src\main\java\net\majorkernelpanic\streaming\rtcp\SenderReport.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\AACADTSPacketizer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\AACLATMPacketizer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\AMRNBPacketizer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\AbstractPacketizer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\H263Packetizer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\H264Packetizer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\MediaCodecInputStream.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtp\RtpSocket.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtsp\
+* app\src\main\java\net\majorkernelpanic\streaming\rtsp\RtspClient.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtsp\RtspServer.java
+* app\src\main\java\net\majorkernelpanic\streaming\rtsp\UriParser.java
+* app\src\main\java\net\majorkernelpanic\streaming\video\
+* app\src\main\java\net\majorkernelpanic\streaming\video\CodecManager.java
+* app\src\main\java\net\majorkernelpanic\streaming\video\H263Stream.java
+* app\src\main\java\net\majorkernelpanic\streaming\video\H264Stream.java
+* app\src\main\java\net\majorkernelpanic\streaming\video\VideoQuality.java
+* app\src\main\java\net\majorkernelpanic\streaming\video\VideoStream.java
+* app\src\main\res\
+* app\src\main\res\anim\
+* app\src\main\res\anim\pulse.xml
+* app\src\main\res\drawable-hdpi\
+* app\src\main\res\drawable-hdpi\background.png
+* app\src\main\res\drawable-hdpi\check.png
+* app\src\main\res\drawable-hdpi\icon.png
+* app\src\main\res\drawable-hdpi\quit.png
+* app\src\main\res\drawable-hdpi\settings.png
+* app\src\main\res\drawable-ldpi\
+* app\src\main\res\drawable-ldpi\icon.png
+* app\src\main\res\drawable-ldpi\quit.png
+* app\src\main\res\drawable-ldpi\settings.png
+* app\src\main\res\drawable-mdpi\
+* app\src\main\res\drawable-mdpi\icon.png
+* app\src\main\res\drawable-mdpi\quit.png
+* app\src\main\res\drawable-mdpi\settings.png
+* app\src\main\res\drawable\
+* app\src\main\res\drawable\preview.xml
+* app\src\main\res\layout-sw600dp\
+* app\src\main\res\layout-sw600dp\preview.xml
+* app\src\main\res\layout-sw600dp\spydroid.xml
+* app\src\main\res\layout-sw600dp\tablet.xml
+* app\src\main\res\layout\
+* app\src\main\res\layout\about.xml
+* app\src\main\res\layout\main.xml
+* app\src\main\res\layout\preview.xml
+* app\src\main\res\layout\spydroid.xml
+* app\src\main\res\layout\tablet.xml
+* app\src\main\res\menu\
+* app\src\main\res\menu\menu.xml
+* app\src\main\res\raw\
+* app\src\main\res\raw\animals_cat.mp3
+* app\src\main\res\raw\animals_dog.mp3
+* app\src\main\res\raw\funny_fart.mp3
+* app\src\main\res\raw\funny_fart2.mp3
+* app\src\main\res\raw\funny_snoring.mp3
+* app\src\main\res\raw\scary_breath.mp3
+* app\src\main\res\raw\scary_evil_laughter.mp3
+* app\src\main\res\raw\scary_horror.mp3
+* app\src\main\res\raw\scary_insane_laughter.mp3
+* app\src\main\res\raw\scary_long_growl.mp3
+* app\src\main\res\raw\scary_thunder.mp3
+* app\src\main\res\raw\war_explosion.mp3
+* app\src\main\res\raw\war_gunshot.mp3
+* app\src\main\res\values-de\
+* app\src\main\res\values-de\strings.xml
+* app\src\main\res\values-fr\
+* app\src\main\res\values-fr\strings.xml
+* app\src\main\res\values-ru\
+* app\src\main\res\values-ru\strings.xml
+* app\src\main\res\values\
+* app\src\main\res\values\arrays.xml
+* app\src\main\res\values\strings.xml
+* app\src\main\res\xml\
+* app\src\main\res\xml\preferences.xml
+* build.gradle
+* build.xml
+* gradle\
+* gradle\wrapper\
+* gradle\wrapper\gradle-wrapper.jar
+* gradle\wrapper\gradle-wrapper.properties
+* gradlew
+* gradlew.bat
+* proguard.cfg
+* settings.gradle
+
+Replaced Jars with Dependencies:
+--------------------------------
+The importer recognized the following .jar files as third party
+libraries and replaced them with Gradle dependencies instead. This has
+the advantage that more explicit version information is known, and the
+libraries can be updated automatically. However, it is possible that
+the .jar file in your project was of an older version than the
+dependency we picked, which could render the project not compileable.
+You can disable the jar replacement in the import wizard and try again:
+
+android-support-v4.jar => com.android.support:support-v4:19.1.0
+gcm.jar => com.google.android.gms:play-services:+
+
+Moved Files:
+------------
+Android Gradle projects use a different directory structure than ADT
+Eclipse projects. Here's how the projects were restructured:
+
+* AndroidManifest.xml => app\src\main\AndroidManifest.xml
+* assets\ => app\src\main\assets\
+* libs\acra-4.4.0.jar => app\libs\acra-4.4.0.jar
+* libs\GoogleAdMobAdsSdk-6.1.0.jar => app\libs\GoogleAdMobAdsSdk-6.1.0.jar
+* libs\sc-light-jdk15on-1.47.0.2.jar => app\libs\sc-light-jdk15on-1.47.0.2.jar
+* libs\scpkix-jdk15on-1.47.0.2.jar => app\libs\scpkix-jdk15on-1.47.0.2.jar
+* libs\scprov-jdk15on-1.47.0.2.jar => app\libs\scprov-jdk15on-1.47.0.2.jar
+* lint.xml => app\lint.xml
+* proguard-project.txt => app\proguard-project.txt
+* res\ => app\src\main\res\
+* src\ => app\src\main\java\
+
+Next Steps:
+-----------
+You can now build the project. The Gradle project needs network
+connectivity to download dependencies.
+
+Bugs:
+-----
+If for some reason your project does not build, and you determine that
+it is due to a bug or limitation of the Eclipse to Gradle importer,
+please file a bug at http://b.android.com with category
+Component-Tools.
+
+(This import summary is for your information only, and can be deleted
+after import once you are satisfied with the results.)

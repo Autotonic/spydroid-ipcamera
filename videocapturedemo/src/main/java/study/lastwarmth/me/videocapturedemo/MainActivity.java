@@ -91,6 +91,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     @Override
     public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
         // TODO Auto-generated method stub
+//        int length = data.length;
+//        byte[] rotate = new byte[length];
+//        rotateYUV240SP(data, rotate, width, height);
+//        rotate(width, height, data, rotate);
+
         putYUVData(data, data.length);
     }
 
@@ -159,4 +164,49 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
         return true;
     }
+
+//    public static void rotateYUV240SP(byte[] src, byte[] des, int width, int height) {
+//
+//        int wh = width * height;
+//        //旋转Y
+//        int k = 0;
+//        for (int i = 0; i < width; i++) {
+//            for (int j = 0; j < height; j++) {
+//                des[k] = src[width * j + i];
+//                k++;
+//            }
+//        }
+//
+//        for (int i = 0; i < width; i += 2) {
+//            for (int j = 0; j < height / 2; j++) {
+//                des[k] = src[wh + width * j + i];
+//                des[k + 1] = src[wh + width * j + i + 1];
+//                k += 2;
+//            }
+//        }
+//
+//
+//    }
+
+    // http://www.ay27.com/2014/10/09/2014-10-09-a-simple-image-rotate-function/
+//    private static void rotate(int width, int height, byte[] src, byte[] dst) {
+//        int delta = 0;
+//        for (int x = 0; x < width; x++) {
+//            for (int y = height - 1; y >= 0; y--) {
+//                dst[delta] = src[y * width + x];
+//                delta++;
+//            }
+//        }
+//
+//        int wh = width * height;
+//        int ww = width / 2, hh = height / 2;
+//
+//        for (int i = 0; i < ww; i++) {
+//            for (int j = 0; j < hh; j++) {
+//                dst[delta] = src[wh + width * (hh - j - 1) + i];
+//                dst[delta + 1] = src[wh + width * (hh - j - 1) + i + 1];
+//                delta += 2;
+//            }
+//        }
+//    }
 }

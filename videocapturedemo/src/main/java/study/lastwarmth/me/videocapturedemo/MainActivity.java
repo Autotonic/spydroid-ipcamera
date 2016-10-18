@@ -30,6 +30,7 @@ import study.lastwarmth.me.videocapturedemo.hw.NV21Convertor;
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener {
 
     String path = Environment.getExternalStorageDirectory() + "/easy.h264";
+    String yuvPath = Environment.getExternalStorageDirectory() + "/test_1280x720.yuv";
 
     int width = 1280, height = 720;
     int framerate, bitrate;
@@ -161,6 +162,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             } else {
                 dst = data;
             }
+            Util.save(data, 0, data.length, yuvPath, true);
             try {
                 int bufferIndex = mMediaCodec.dequeueInputBuffer(5000000);
                 if (bufferIndex >= 0) {

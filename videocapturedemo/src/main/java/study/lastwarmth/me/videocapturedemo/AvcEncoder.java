@@ -110,12 +110,12 @@ public class AvcEncoder {
                 long generateIndex = 0;
 
                 while (isRuning) {
-                    if (MainActivity.YUVQueue.size() > 0) {
-                        input = MainActivity.YUVQueue.poll();
-                        byte[] yuv420sp = new byte[m_width * m_height * 3 / 2];
-                        NV21ToNV12(input, yuv420sp, m_width, m_height);
-                        input = yuv420sp;
-                    }
+//                    if (MainActivity.YUVQueue.size() > 0) {
+//                        input = MainActivity.YUVQueue.poll();
+//                        byte[] yuv420sp = new byte[m_width * m_height * 3 / 2];
+//                        NV21ToNV12(input, yuv420sp, m_width, m_height);
+//                        input = yuv420sp;
+//                    }
                     if (input != null) {
                         try {
                             long startMs = System.currentTimeMillis();

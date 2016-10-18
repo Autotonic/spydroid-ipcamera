@@ -1,74 +1,136 @@
 package study.lastwarmth.me.videocapturedemo;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
-import android.media.MediaCodecInfo;
-import android.media.MediaCodecList;
-import android.os.Build;
+import android.media.MediaCodec;
+import android.media.MediaFormat;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.MotionEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.Toast;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 
-public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback, Camera.PreviewCallback {
+import study.lastwarmth.me.videocapturedemo.hw.EncoderDebugger;
+import study.lastwarmth.me.videocapturedemo.hw.NV21Convertor;
 
-    private SurfaceView surfaceview;
+public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener {
 
-    private SurfaceHolder surfaceHolder;
+    String path = Environment.getExternalStorageDirectory() + "/easy.h264";
 
-    private Camera camera;
-
-    private Camera.Parameters parameters;
-
-    int width = 1280;
-
-    int height = 720;
-
-    int framerate = 30;
-
-    int biterate = 8500 * 1000;
-
-    private static int yuvqueuesize = 10;
-
-    public static ArrayBlockingQueue<byte[]> YUVQueue = new ArrayBlockingQueue<byte[]>(yuvqueuesize);
-
-    private AvcEncoder avcCodec;
-
+    int width = 1280, height = 720;
+    int framerate, bitrate;
+    int mCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
+    MediaCodec mMediaCodec;
+    SurfaceView surfaceView;
+    SurfaceHolder surfaceHolder;
+    Camera mCamera;
+    NV21Convertor mConvertor;
+    Button btnSwitch;
+    boolean started = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        surfaceview = (SurfaceView) findViewById(R.id.surfaceview);
-        surfaceHolder = surfaceview.getHolder();
-        surfaceHolder.addCallback(this);
-        SupportAvcCodec();
+        btnSwitch = (Button) findViewById(R.id.btn_switch);
+        btnSwitch.setOnClickListener(this);
+        initMediaCodec();
+        surfaceView = (SurfaceView) findViewById(R.id.sv_surfaceview);
+        surfaceView.getHolder().addCallback(this);
+        surfaceView.getHolder().setFixedSize(getResources().getDisplayMetrics().widthPixels,
+                getResources().getDisplayMetrics().heightPixels);
     }
 
+    private void initMediaCodec() {
+        int dgree = getDgree();
+        framerate = 15;
+        bitrate = 2 * width * height * framerate / 20;
+        EncoderDebugger debugger = EncoderDebugger.debug(getApplicationContext(), width, height);
+        mConvertor = debugger.getNV21Convertor();
+        try {
+            mMediaCodec = MediaCodec.createByCodecName(debugger.getEncoderName());
+            MediaFormat mediaFormat;
+            if (dgree == 0) {
+                mediaFormat = MediaFormat.createVideoFormat("video/avc", height, width);
+            } else {
+                mediaFormat = MediaFormat.createVideoFormat("video/avc", width, height);
+            }
+            mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
+            mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+                    debugger.getEncoderColorFormat());
+            mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
+            mMediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
+            mMediaCodec.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static int[] determineMaximumSupportedFramerate(Camera.Parameters parameters) {
+        int[] maxFps = new int[]{0, 0};
+        List<int[]> supportedFpsRanges = parameters.getSupportedPreviewFpsRange();
+        for (Iterator<int[]> it = supportedFpsRanges.iterator(); it.hasNext(); ) {
+            int[] interval = it.next();
+            if (interval[1] > maxFps[1] || (interval[0] > maxFps[0] && interval[1] == maxFps[1])) {
+                maxFps = interval;
+            }
+        }
+        return maxFps;
+    }
+
+    private boolean ctreateCamera(SurfaceHolder surfaceHolder) {
+        try {
+            mCamera = Camera.open(mCameraId);
+            Camera.Parameters parameters = mCamera.getParameters();
+            int[] max = determineMaximumSupportedFramerate(parameters);
+            Camera.CameraInfo camInfo = new Camera.CameraInfo();
+            Camera.getCameraInfo(mCameraId, camInfo);
+            int cameraRotationOffset = camInfo.orientation;
+            int rotate = (360 + cameraRotationOffset - getDgree()) % 360;
+            parameters.setRotation(rotate);
+            parameters.setPreviewFormat(ImageFormat.NV21);
+            List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
+            parameters.setPreviewSize(width, height);
+            parameters.setPreviewFpsRange(max[0], max[1]);
+            mCamera.setParameters(parameters);
+            mCamera.autoFocus(null);
+            int displayRotation;
+            displayRotation = (cameraRotationOffset - getDgree() + 360) % 360;
+            mCamera.setDisplayOrientation(displayRotation);
+            mCamera.setPreviewDisplay(surfaceHolder);
+            return true;
+        } catch (Exception e) {
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            String stack = sw.toString();
+            Toast.makeText(this, stack, Toast.LENGTH_LONG).show();
+            destroyCamera();
+            e.printStackTrace();
+            return false;
+        }
+    }
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        camera = getBackCamera();
-        startcamera(camera);
-        avcCodec = new AvcEncoder(width, height, framerate, biterate);
-        Camera.Parameters parameters = camera.getParameters();
-        String supportedSizesStr = "Supported resolutions: ";
-        List<Camera.Size> supportedSizes = parameters.getSupportedPreviewSizes();
-        for (Iterator<Camera.Size> it = supportedSizes.iterator(); it.hasNext(); ) {
-            Camera.Size size = it.next();
-            supportedSizesStr += size.width + "x" + size.height + (it.hasNext() ? ", " : "");
-        }
-        Log.v("TAG", supportedSizesStr);
-        avcCodec.StartEncoderThread();
+        surfaceHolder = holder;
+        ctreateCamera(surfaceHolder);
     }
 
     @Override
@@ -78,135 +140,164 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        if (null != camera) {
-            camera.setPreviewCallback(null);
-            camera.stopPreview();
-            camera.release();
-            camera = null;
-            avcCodec.StopThread();
+        stopPreview();
+        destroyCamera();
+    }
+
+    Camera.PreviewCallback previewCallback = new Camera.PreviewCallback() {
+        byte[] mPpsSps = new byte[0];
+
+        @Override
+        public void onPreviewFrame(byte[] data, Camera camera) {
+            if (data == null) {
+                return;
+            }
+            ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
+            ByteBuffer[] outputBuffers = mMediaCodec.getOutputBuffers();
+            byte[] dst = new byte[data.length];
+            Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
+            if (getDgree() == 0) {
+                dst = Util.rotateNV21Degree90(data, previewSize.width, previewSize.height);
+            } else {
+                dst = data;
+            }
+            try {
+                int bufferIndex = mMediaCodec.dequeueInputBuffer(5000000);
+                if (bufferIndex >= 0) {
+                    inputBuffers[bufferIndex].clear();
+                    mConvertor.convert(dst, inputBuffers[bufferIndex]);
+                    mMediaCodec.queueInputBuffer(bufferIndex, 0,
+                            inputBuffers[bufferIndex].position(),
+                            System.nanoTime() / 1000, 0);
+                    MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+                    int outputBufferIndex = mMediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+                    while (outputBufferIndex >= 0) {
+                        ByteBuffer outputBuffer = outputBuffers[outputBufferIndex];
+                        byte[] outData = new byte[bufferInfo.size];
+                        outputBuffer.get(outData);
+                        //记录pps和sps
+                        if (outData[0] == 0 && outData[1] == 0 && outData[2] == 0 && outData[3] == 1 && outData[4] == 103) {
+                            mPpsSps = outData;
+                        } else if (outData[0] == 0 && outData[1] == 0 && outData[2] == 0 && outData[3] == 1 && outData[4] == 101) {
+                            //在关键帧前面加上pps和sps数据
+                            byte[] iframeData = new byte[mPpsSps.length + outData.length];
+                            System.arraycopy(mPpsSps, 0, iframeData, 0, mPpsSps.length);
+                            System.arraycopy(outData, 0, iframeData, mPpsSps.length, outData.length);
+                            outData = iframeData;
+                        }
+                        Util.save(outData, 0, outData.length, path, true);
+                        mMediaCodec.releaseOutputBuffer(outputBufferIndex, false);
+                        outputBufferIndex = mMediaCodec.dequeueOutputBuffer(bufferInfo, 0);
+                    }
+                } else {
+                    Log.e("easypusher", "No buffer available !");
+                }
+            } catch (Exception e) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+                String stack = sw.toString();
+                Log.e("save_log", stack);
+                e.printStackTrace();
+            } finally {
+                mCamera.addCallbackBuffer(dst);
+            }
+        }
+
+    };
+
+    /**
+     * 开启预览
+     */
+    public synchronized void startPreview() {
+        if (mCamera != null && !started) {
+            mCamera.startPreview();
+            int previewFormat = mCamera.getParameters().getPreviewFormat();
+            Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
+            int size = previewSize.width * previewSize.height
+                    * ImageFormat.getBitsPerPixel(previewFormat)
+                    / 8;
+            mCamera.addCallbackBuffer(new byte[size]);
+            mCamera.setPreviewCallbackWithBuffer(previewCallback);
+            started = true;
+            btnSwitch.setText("停止");
         }
     }
 
+    /**
+     * 停止预览
+     */
+    public synchronized void stopPreview() {
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            mCamera.setPreviewCallbackWithBuffer(null);
+            started = false;
+            btnSwitch.setText("开始");
+        }
+    }
+
+    /**
+     * 销毁Camera
+     */
+    protected synchronized void destroyCamera() {
+        if (mCamera != null) {
+            mCamera.stopPreview();
+            try {
+                mCamera.release();
+            } catch (Exception e) {
+
+            }
+            mCamera = null;
+        }
+    }
+
+    private int getDgree() {
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        int degrees = 0;
+        switch (rotation) {
+            case Surface.ROTATION_0:
+                degrees = 0;
+                break; // Natural orientation
+            case Surface.ROTATION_90:
+                degrees = 90;
+                break; // Landscape left
+            case Surface.ROTATION_180:
+                degrees = 180;
+                break;// Upside down
+            case Surface.ROTATION_270:
+                degrees = 270;
+                break;// Landscape right
+        }
+        return degrees;
+    }
 
     @Override
-    public void onPreviewFrame(byte[] data, android.hardware.Camera camera) {
-        // TODO Auto-generated method stub
-//        int length = data.length;
-//        byte[] rotate = new byte[length];
-//        rotateYUV240SP(data, rotate, width, height);
-//        rotate(width, height, data, rotate);
-
-        putYUVData(data, data.length);
-    }
-
-    public void putYUVData(byte[] buffer, int length) {
-        if (YUVQueue.size() >= 10) {
-            YUVQueue.poll();
-        }
-        YUVQueue.add(buffer);
-    }
-
-    @SuppressLint("NewApi")
-    private boolean SupportAvcCodec() {
-        if (Build.VERSION.SDK_INT >= 18) {
-            for (int j = MediaCodecList.getCodecCount() - 1; j >= 0; j--) {
-                MediaCodecInfo codecInfo = MediaCodecList.getCodecInfoAt(j);
-
-                String[] types = codecInfo.getSupportedTypes();
-                for (int i = 0; i < types.length; i++) {
-                    if (types[i].equalsIgnoreCase("video/avc")) {
-                        return true;
-                    }
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.btn_switch:
+                if (!started) {
+                    startPreview();
+                } else {
+                    stopPreview();
                 }
-            }
-        }
-        return false;
-    }
-
-
-    private void startcamera(Camera mCamera) {
-        if (mCamera != null) {
-            try {
-                mCamera.setPreviewCallback(this);
-                mCamera.setDisplayOrientation(90);
-                if (parameters == null) {
-                    parameters = mCamera.getParameters();
-                }
-                parameters = mCamera.getParameters();
-                parameters.setPreviewFormat(ImageFormat.NV21);
-                parameters.setPreviewSize(width, height);
-                mCamera.setParameters(parameters);
-                mCamera.setPreviewDisplay(surfaceHolder);
-                mCamera.startPreview();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                break;
         }
     }
 
-    @TargetApi(9)
-    private Camera getBackCamera() {
-        Camera c = null;
-        try {
-            c = Camera.open(0); // attempt to get a Camera instance
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return c; // returns null if camera is unavailable
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        destroyCamera();
+        mMediaCodec.stop();
+        mMediaCodec.release();
+        mMediaCodec = null;
     }
-
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {//屏幕触摸事件
         if (event.getAction() == MotionEvent.ACTION_DOWN) {//按下时自动对焦
-            camera.autoFocus(null);
+            mCamera.autoFocus(null);
         }
         return true;
     }
-
-//    public static void rotateYUV240SP(byte[] src, byte[] des, int width, int height) {
-//
-//        int wh = width * height;
-//        //旋转Y
-//        int k = 0;
-//        for (int i = 0; i < width; i++) {
-//            for (int j = 0; j < height; j++) {
-//                des[k] = src[width * j + i];
-//                k++;
-//            }
-//        }
-//
-//        for (int i = 0; i < width; i += 2) {
-//            for (int j = 0; j < height / 2; j++) {
-//                des[k] = src[wh + width * j + i];
-//                des[k + 1] = src[wh + width * j + i + 1];
-//                k += 2;
-//            }
-//        }
-//
-//
-//    }
-
-    // http://www.ay27.com/2014/10/09/2014-10-09-a-simple-image-rotate-function/
-//    private static void rotate(int width, int height, byte[] src, byte[] dst) {
-//        int delta = 0;
-//        for (int x = 0; x < width; x++) {
-//            for (int y = height - 1; y >= 0; y--) {
-//                dst[delta] = src[y * width + x];
-//                delta++;
-//            }
-//        }
-//
-//        int wh = width * height;
-//        int ww = width / 2, hh = height / 2;
-//
-//        for (int i = 0; i < ww; i++) {
-//            for (int j = 0; j < hh; j++) {
-//                dst[delta] = src[wh + width * (hh - j - 1) + i];
-//                dst[delta + 1] = src[wh + width * (hh - j - 1) + i + 1];
-//                delta += 2;
-//            }
-//        }
-//    }
 }

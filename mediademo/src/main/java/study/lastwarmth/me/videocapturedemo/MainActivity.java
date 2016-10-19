@@ -1,5 +1,6 @@
 package study.lastwarmth.me.videocapturedemo;
 
+import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.media.MediaCodec;
@@ -277,11 +278,14 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_switch:
-                if (!started) {
-                    startPreview();
-                } else {
-                    stopPreview();
-                }
+//                if (!started) {
+//                    startPreview();
+//                } else {
+//                    stopPreview();
+//                }
+
+                Intent intent = new Intent(MainActivity.this, RecordAudioActivity.class);
+                startActivity(intent);
                 break;
         }
     }

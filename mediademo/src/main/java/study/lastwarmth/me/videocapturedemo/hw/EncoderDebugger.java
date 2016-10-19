@@ -33,12 +33,12 @@ import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
 
-import study.lastwarmth.me.videocapturedemo.hw.CodecManager.Codec;
-
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
+
+import study.lastwarmth.me.videocapturedemo.hw.CodecManager.Codec;
 
 /**
  * The purpose of this class is to detect and by-pass some bugs (or underspecified configuration) that

@@ -42,6 +42,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     Camera mCamera;
     NV21Convertor mConvertor;
     Button btnSwitch;
+    Button audio;
     boolean started = false;
 
     @Override
@@ -50,7 +51,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         btnSwitch = (Button) findViewById(R.id.btn_switch);
+        audio = (Button) findViewById(R.id.btn_audio);
         btnSwitch.setOnClickListener(this);
+        audio.setOnClickListener(this);
         initMediaCodec();
         surfaceView = (SurfaceView) findViewById(R.id.sv_surfaceview);
         surfaceView.getHolder().addCallback(this);
@@ -278,15 +281,15 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.btn_switch:
-//                if (!started) {
-//                    startPreview();
-//                } else {
-//                    stopPreview();
-//                }
-
-                Intent intent = new Intent(MainActivity.this, RecordAudioActivity.class);
-                startActivity(intent);
+                if (!started) {
+                    startPreview();
+                } else {
+                    stopPreview();
+                }
                 break;
+            case R.id.btn_audio:
+                Intent intent = new Intent(this, RecordAudioActivity.class);
+                startActivity(intent);
         }
     }
 

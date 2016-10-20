@@ -8,7 +8,6 @@ import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -30,7 +29,7 @@ import study.lastwarmth.me.videocapturedemo.hw.NV21Convertor;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener {
 
-    String path = Environment.getExternalStorageDirectory() + "/easy.h264";
+    String path = Environment.getExternalStorageDirectory() + "/test_1280x720.h264";
     String yuvPath = Environment.getExternalStorageDirectory() + "/test_1280x720.yuv";
 
     int width = 1280, height = 720;
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     private void initMediaCodec() {
-        int dgree = getDgree();
+        int degree = getDegree();
         framerate = 15;
         bitrate = 2 * width * height * framerate / 20;
         EncoderDebugger debugger = EncoderDebugger.debug(getApplicationContext(), width, height);
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         try {
             mMediaCodec = MediaCodec.createByCodecName(debugger.getEncoderName());
             MediaFormat mediaFormat;
-            if (dgree == 0) {
+            if (degree == 0) {
                 mediaFormat = MediaFormat.createVideoFormat("video/avc", height, width);
             } else {
                 mediaFormat = MediaFormat.createVideoFormat("video/avc", width, height);
@@ -87,7 +86,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
     }
 
-    public static int[] determineMaximumSupportedFramerate(Camera.Parameters parameters) {
+    public static int[] determineMaximumSupportedFrameRate(Camera.Parameters parameters) {
         int[] maxFps = new int[]{0, 0};
         List<int[]> supportedFpsRanges = parameters.getSupportedPreviewFpsRange();
         for (Iterator<int[]> it = supportedFpsRanges.iterator(); it.hasNext(); ) {
@@ -99,24 +98,23 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         return maxFps;
     }
 
-    private boolean ctreateCamera(SurfaceHolder surfaceHolder) {
+    private boolean createCamera(SurfaceHolder surfaceHolder) {
         try {
             mCamera = Camera.open(mCameraId);
             Camera.Parameters parameters = mCamera.getParameters();
-            int[] max = determineMaximumSupportedFramerate(parameters);
+            int[] max = determineMaximumSupportedFrameRate(parameters);
             Camera.CameraInfo camInfo = new Camera.CameraInfo();
             Camera.getCameraInfo(mCameraId, camInfo);
             int cameraRotationOffset = camInfo.orientation;
-            int rotate = (360 + cameraRotationOffset - getDgree()) % 360;
+            int rotate = (360 + cameraRotationOffset - getDegree()) % 360;
             parameters.setRotation(rotate);
             parameters.setPreviewFormat(ImageFormat.NV21);
-            List<Camera.Size> sizes = parameters.getSupportedPreviewSizes();
             parameters.setPreviewSize(width, height);
             parameters.setPreviewFpsRange(max[0], max[1]);
             mCamera.setParameters(parameters);
             mCamera.autoFocus(null);
             int displayRotation;
-            displayRotation = (cameraRotationOffset - getDgree() + 360) % 360;
+            displayRotation = (cameraRotationOffset - getDegree() + 360) % 360;
             mCamera.setDisplayOrientation(displayRotation);
             mCamera.setPreviewDisplay(surfaceHolder);
             return true;
@@ -135,7 +133,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         surfaceHolder = holder;
-        ctreateCamera(surfaceHolder);
+        createCamera(surfaceHolder);
     }
 
     @Override
@@ -159,9 +157,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
             ByteBuffer[] inputBuffers = mMediaCodec.getInputBuffers();
             ByteBuffer[] outputBuffers = mMediaCodec.getOutputBuffers();
-            byte[] dst = new byte[data.length];
+            byte[] dst;
             Camera.Size previewSize = mCamera.getParameters().getPreviewSize();
-            if (getDgree() == 0) {
+            if (getDegree() == 0) {
                 dst = Util.rotateNV21Degree90(data, previewSize.width, previewSize.height);
             } else {
                 dst = data;
@@ -186,30 +184,22 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                             mPpsSps = outData;
                         } else if (outData[0] == 0 && outData[1] == 0 && outData[2] == 0 && outData[3] == 1 && outData[4] == 101) {
                             //在关键帧前面加上pps和sps数据
-                            byte[] iframeData = new byte[mPpsSps.length + outData.length];
-                            System.arraycopy(mPpsSps, 0, iframeData, 0, mPpsSps.length);
-                            System.arraycopy(outData, 0, iframeData, mPpsSps.length, outData.length);
-                            outData = iframeData;
+                            byte[] frameData = new byte[mPpsSps.length + outData.length];
+                            System.arraycopy(mPpsSps, 0, frameData, 0, mPpsSps.length);
+                            System.arraycopy(outData, 0, frameData, mPpsSps.length, outData.length);
+                            outData = frameData;
                         }
                         Util.save(outData, 0, outData.length, path, true);
                         mMediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                         outputBufferIndex = mMediaCodec.dequeueOutputBuffer(bufferInfo, 0);
                     }
-                } else {
-                    Log.e("easypusher", "No buffer available !");
                 }
             } catch (Exception e) {
-                StringWriter sw = new StringWriter();
-                PrintWriter pw = new PrintWriter(sw);
-                e.printStackTrace(pw);
-                String stack = sw.toString();
-                Log.e("save_log", stack);
                 e.printStackTrace();
             } finally {
                 mCamera.addCallbackBuffer(dst);
             }
         }
-
     };
 
     /**
@@ -251,13 +241,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             try {
                 mCamera.release();
             } catch (Exception e) {
-
+                e.printStackTrace();
             }
             mCamera = null;
         }
     }
 
-    private int getDgree() {
+    private int getDegree() {
         int rotation = getWindowManager().getDefaultDisplay().getRotation();
         int degrees = 0;
         switch (rotation) {
@@ -303,8 +293,10 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {//屏幕触摸事件
-        if (event.getAction() == MotionEvent.ACTION_DOWN) {//按下时自动对焦
+    public boolean onTouchEvent(MotionEvent event) {
+        // 屏幕触摸事件
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            // 按下时自动对焦
             mCamera.autoFocus(null);
         }
         return true;

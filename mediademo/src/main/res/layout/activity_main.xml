@@ -6,7 +6,22 @@
     <SurfaceView
         android:id="@+id/sv_surfaceview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:layout_below="@+id/decode_parent" />
+
+    <RelativeLayout
+        android:id="@+id/decode_parent"
+        android:layout_width="162dp"
+        android:layout_height="92dp"
+        android:background="#ffffff">
+
+        <SurfaceView
+            android:id="@+id/decode_surface"
+            android:layout_width="160dp"
+            android:layout_height="90dp"
+            android:layout_centerInParent="true" />
+
+    </RelativeLayout>
 
     <Button
         android:id="@+id/btn_switch"

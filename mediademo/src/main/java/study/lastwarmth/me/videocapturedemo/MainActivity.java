@@ -8,6 +8,7 @@ import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -22,6 +23,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import study.lastwarmth.me.videocapturedemo.hw.EncoderDebugger;
@@ -32,17 +34,22 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
     String path = Environment.getExternalStorageDirectory() + "/test_1280x720.h264";
     String yuvPath = Environment.getExternalStorageDirectory() + "/test_1280x720.yuv";
 
+    private List<byte[]> h264data = new LinkedList<>();
+
     int width = 1280, height = 720;
     int framerate, bitrate;
     int mCameraId = Camera.CameraInfo.CAMERA_FACING_BACK;
     MediaCodec mMediaCodec;
     SurfaceView surfaceView;
+    SurfaceView decodeSurface;
     SurfaceHolder surfaceHolder;
     Camera mCamera;
     NV21Convertor mConvertor;
     Button btnSwitch;
     Button audio;
     boolean started = false;
+    private MediaCodec decoder;
+    private final static int TIME_INTERNAL = 30;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,6 +65,24 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         surfaceView.getHolder().addCallback(this);
         surfaceView.getHolder().setFixedSize(getResources().getDisplayMetrics().widthPixels,
                 getResources().getDisplayMetrics().heightPixels);
+
+        decodeSurface = (SurfaceView) findViewById(R.id.decode_surface);
+        decodeSurface.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                initMediaDecode();
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+
+            }
+        });
     }
 
     private void initMediaCodec() {
@@ -84,6 +109,20 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void initMediaDecode() {
+        Log.e("TAG", "initMediaDecode");
+        MediaFormat format = MediaFormat.createVideoFormat("video/avc", width, height);
+        try {
+            decoder = MediaCodec.createDecoderByType("video/avc");
+            decoder.configure(format, decodeSurface.getHolder().getSurface(), null, 0);
+            decoder.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        new DecodeThread().start();
     }
 
     public static int[] determineMaximumSupportedFrameRate(Camera.Parameters parameters) {
@@ -164,7 +203,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             } else {
                 dst = data;
             }
-            Util.save(data, 0, data.length, yuvPath, true);
+            // 保存YUV，先将YUV420SP转化成YUV420P
+//            mConvertor.convert(data);
+//            Util.save(data, 0, data.length, yuvPath, true);
             try {
                 int bufferIndex = mMediaCodec.dequeueInputBuffer(5000000);
                 if (bufferIndex >= 0) {
@@ -189,7 +230,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
                             System.arraycopy(outData, 0, frameData, mPpsSps.length, outData.length);
                             outData = frameData;
                         }
-                        Util.save(outData, 0, outData.length, path, true);
+                        // 保存H264
+//                        Util.save(outData, 0, outData.length, path, true);
+                        h264data.add(outData);
                         mMediaCodec.releaseOutputBuffer(outputBufferIndex, false);
                         outputBufferIndex = mMediaCodec.dequeueOutputBuffer(bufferInfo, 0);
                     }
@@ -301,4 +344,48 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         }
         return true;
     }
+
+    private class DecodeThread extends Thread {
+
+        MediaCodec.BufferInfo mBufferInfo;
+        int mCount = 0;
+
+        public DecodeThread() {
+            Log.e("TAG", "DecodeThread");
+            mBufferInfo = new MediaCodec.BufferInfo();
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                if (h264data.size() > 0) {
+                    byte[] data = h264data.get(0);
+                    h264data.remove(0);
+                    ByteBuffer[] inputBuffers = decoder.getInputBuffers();
+                    int inputBufferIndex = decoder.dequeueInputBuffer(100);
+                    if (inputBufferIndex >= 0) {
+                        ByteBuffer inputBuffer = inputBuffers[inputBufferIndex];
+                        inputBuffer.clear();
+                        inputBuffer.put(data);
+                        decoder.queueInputBuffer(inputBufferIndex, 0, data.length, mCount * TIME_INTERNAL, 0);
+                    }
+
+                    // Get output buffer index
+                    int outputBufferIndex = decoder.dequeueOutputBuffer(mBufferInfo, 100);
+                    while (outputBufferIndex >= 0) {
+                        Log.e("Media", "onFrame index:" + outputBufferIndex);
+                        decoder.releaseOutputBuffer(outputBufferIndex, true);
+                        outputBufferIndex = decoder.dequeueOutputBuffer(mBufferInfo, 0);
+                    }
+                } else {
+                    try {
+                        sleep(TIME_INTERNAL);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
 }

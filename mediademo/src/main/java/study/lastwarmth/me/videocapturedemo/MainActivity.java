@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.graphics.ImageFormat;
 import android.hardware.Camera;
 import android.media.MediaCodec;
+import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.os.Bundle;
 import android.os.Environment;
@@ -26,7 +27,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import study.lastwarmth.me.videocapturedemo.hw.EncoderDebugger;
 import study.lastwarmth.me.videocapturedemo.hw.NV21Convertor;
 
 public class MainActivity extends AppCompatActivity implements SurfaceHolder.Callback, View.OnClickListener {
@@ -89,10 +89,11 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
         int degree = getDegree();
         framerate = 15;
         bitrate = 2 * width * height * framerate / 20;
-        EncoderDebugger debugger = EncoderDebugger.debug(getApplicationContext(), width, height);
-        mConvertor = debugger.getNV21Convertor();
+//        EncoderDebugger debugger = EncoderDebugger.debug(getApplicationContext(), width, height);
+//        mConvertor = debugger.getNV21Convertor();
         try {
-            mMediaCodec = MediaCodec.createByCodecName(debugger.getEncoderName());
+//            mMediaCodec = MediaCodec.createByCodecName(debugger.getEncoderName());
+            mMediaCodec = MediaCodec.createByCodecName("OMX.google.h264.encoder");
             MediaFormat mediaFormat;
             if (degree == 0) {
                 mediaFormat = MediaFormat.createVideoFormat("video/avc", height, width);
@@ -101,8 +102,9 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
             mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate);
             mediaFormat.setInteger(MediaFormat.KEY_FRAME_RATE, framerate);
-            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
-                    debugger.getEncoderColorFormat());
+            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatYUV420Planar);
+//            mediaFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,
+//                    debugger.getEncoderColorFormat());
             mediaFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1);
             mMediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
             mMediaCodec.start();
@@ -151,7 +153,7 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             parameters.setPreviewSize(width, height);
             parameters.setPreviewFpsRange(max[0], max[1]);
             mCamera.setParameters(parameters);
-            mCamera.autoFocus(null);
+//            mCamera.autoFocus(null);
             int displayRotation;
             displayRotation = (cameraRotationOffset - getDegree() + 360) % 360;
             mCamera.setDisplayOrientation(displayRotation);
@@ -205,12 +207,13 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
             // 保存YUV，先将YUV420SP转化成YUV420P
 //            mConvertor.convert(data);
-//            Util.save(data, 0, data.length, yuvPath, true);
+            Util.save(data, 0, data.length, yuvPath, true);
             try {
                 int bufferIndex = mMediaCodec.dequeueInputBuffer(5000000);
                 if (bufferIndex >= 0) {
                     inputBuffers[bufferIndex].clear();
-                    mConvertor.convert(dst, inputBuffers[bufferIndex]);
+//                    mConvertor.convert(dst, inputBuffers[bufferIndex]);
+                    swapYV12toI420(dst, 1280, 720, inputBuffers[bufferIndex]);
                     mMediaCodec.queueInputBuffer(bufferIndex, 0,
                             inputBuffers[bufferIndex].position(),
                             System.nanoTime() / 1000, 0);
@@ -244,6 +247,20 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             }
         }
     };
+
+    private byte[] swapYV12toI420(byte[] yv12bytes, int width, int height, ByteBuffer buffer) {
+        byte[] i420bytes = new byte[yv12bytes.length];
+        for (int i = 0; i < width * height; i++)
+            i420bytes[i] = yv12bytes[i];
+        for (int i = width * height; i < width * height + (width / 2 * height / 2); i++)
+            i420bytes[i] = yv12bytes[i + (width / 2 * height / 2)];
+        for (int i = width * height + (width / 2 * height / 2); i < width * height + 2 * (width / 2 * height / 2); i++)
+            i420bytes[i] = yv12bytes[i - (width / 2 * height / 2)];
+
+        int min = buffer.capacity() < yv12bytes.length ? buffer.capacity() : yv12bytes.length;
+        buffer.put(i420bytes, 0, min);
+        return i420bytes;
+    }
 
     /**
      * 开启预览

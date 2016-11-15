@@ -151,7 +151,8 @@ public class MainActivity extends AppCompatActivity implements SurfaceHolder.Cal
             parameters.setPreviewSize(width, height);
             parameters.setPreviewFpsRange(max[0], max[1]);
             mCamera.setParameters(parameters);
-            mCamera.autoFocus(null);
+            // 三星手机不支持
+//            mCamera.autoFocus(null);
             int displayRotation;
             displayRotation = (cameraRotationOffset - getDegree() + 360) % 360;
             mCamera.setDisplayOrientation(displayRotation);
